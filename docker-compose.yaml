@@ -1,0 +1,52 @@
+services:
+  mongodb:
+    image: mongo:8
+    container_name: mern-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: change-this-password
+      MONGO_INITDB_DATABASE: huxnStore
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - mern-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile
+    container_name: mern-backend
+    restart: unless-stopped
+    environment:
+      PORT: 5000
+      MONGO_URI: mongodb://admin:change-this-password@mongodb:27017/huxnStore?authSource=admin
+      NODE_ENV: production
+      JWT_SECRET: your-secret-here
+      PAYPAL_CLIENT_ID: your-paypal-client-id
+    depends_on:
+      - mongodb
+    expose:
+      - "5000"
+    networks:
+      - mern-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: mern-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - mern-network
+
+volumes:
+  mongodb_data:
+
+networks:
+  mern-network:
+    driver: bridge
